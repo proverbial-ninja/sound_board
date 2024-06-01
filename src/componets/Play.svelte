@@ -6,7 +6,7 @@
   export let file_path;
   const filename = file_path.substring(file_path.lastIndexOf("/") + 1);
   const musicUrl = convertFileSrc(file_path);
-  //   let sound = new Audio(musicUrl);
+  let sound = new Audio(musicUrl);
 
   onMount(() => {
     sound = WaveSurfer.create({
