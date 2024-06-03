@@ -51,6 +51,10 @@
             filename,
           { dir: BaseDirectory.localDataDir }
         );
+        filess = await readDir("Proverbial SoundBoard/test/", {
+          dir: BaseDirectory.LocalData,
+          recursive: true,
+        });
 
         // Reads the `$APPDATA/users` directory recursively
       } catch (e) {

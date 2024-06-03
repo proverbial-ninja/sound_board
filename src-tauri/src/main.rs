@@ -8,6 +8,8 @@ use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use tauri::{Manager, Window, Wry};
 
+use tauri::api::process::{Command as TauriCommand, CommandEvent};
+
 #[derive(Default)]
 pub struct MidiState {
     pub input: Mutex<Option<MidiInputConnection<()>>>,
@@ -53,6 +55,36 @@ fn open_midi_connection(
 }
 
 fn main() {
+    let (mut rx, child) = TauriCommand::new_sidecar("pocketbase")
+        .expect("failed to create `pocketbase` binary command")
+        .args(["serve"])
+        .spawn()
+        .expect("Failed to spawn sidecar: `pocketbase`");
+
+    dbg!(
+        "Spawned Pocketbase sidecar process `pocketbase` with PID: {}",
+        child.pid()
+    );
+
+    tauri::async_runtime::spawn(async move {
+        // read events such as stdout
+        while let Some(event) = rx.recv().await {
+            if let CommandEvent::Stdout(line) = &event {
+                println!(" ++-> pocketbase: {line}");
+            }
+
+            if let CommandEvent::Stderr(line) = &event {
+                println!(" ++-> pocketbase: {line}");
+            }
+
+            if let CommandEvent::Terminated(_line) = &event {
+                println!(" ++-> pocketbase: terminated.");
+
+                panic!("pocketbase went away :'(");
+            }
+        }
+    });
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![open_midi_connection])
         .manage(MidiState {
